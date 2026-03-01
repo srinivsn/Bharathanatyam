@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bharatanatyam Practice</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: #16213e;
+    border-bottom: 2px solid #e94560;
+  }
+  header h1 { font-size: 1.2rem; color: #e94560; }
+  .gear-btn {
+    background: none; border: none; color: #aaa; font-size: 1.5rem;
+    cursor: pointer; padding: 4px 8px;
+  }
+  .gear-btn:hover, .gear-btn.active { color: #e94560; }
+
+  main { flex: 1; padding: 20px; max-width: 600px; margin: 0 auto; width: 100%; }
+
+  /* Practice Mode */
+  .section-label { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+  .type-buttons { display: flex; gap: 12px; margin-bottom: 24px; }
+  .type-btn {
+    flex: 1; padding: 16px; border: 2px solid #333; border-radius: 12px;
+    background: #16213e; color: #ccc; font-size: 1.1rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .type-btn.selected { border-color: #e94560; color: #e94560; background: #1a1a2e; }
+
+  .number-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px;
+  }
+  .num-btn {
+    padding: 14px; border: 2px solid #333; border-radius: 10px;
+    background: #16213e; color: #ccc; font-size: 1.1rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .num-btn.selected { border-color: #e94560; color: #e94560; }
+  .num-btn:disabled { opacity: 0.25; cursor: default; }
+
+  .speed-buttons { display: flex; gap: 10px; margin-bottom: 24px; }
+  .speed-btn {
+    flex: 1; padding: 12px; border: 2px solid #333; border-radius: 10px;
+    background: #16213e; color: #ccc; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .speed-btn.selected { border-color: #0f3460; color: #4cc9f0; background: #0f3460; }
+  .loop-toggle { flex: none; width: 100%; }
+  .loop-toggle.active { border-color: #e94560; color: #e94560; background: #2a1a2e; }
+
+  .play-btn {
+    width: 100%; padding: 18px; border: none; border-radius: 12px;
+    background: #e94560; color: #fff; font-size: 1.2rem; font-weight: 700;
+    cursor: pointer; transition: background 0.2s; margin-bottom: 16px;
+  }
+  .play-btn:disabled { background: #555; cursor: default; }
+  .play-btn.playing { background: #c0392b; }
+
+  .progress-container {
+    background: #16213e; border-radius: 8px; height: 8px; overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    height: 100%; background: #e94560; border-radius: 8px; width: 0%;
+    transition: width 0.2s;
+  }
+  .time-display { font-size: 0.8rem; color: #666; text-align: right; }
+
+  /* Setup Mode */
+  .setup-file {
+    background: #16213e; border-radius: 12px; padding: 16px;
+    margin-bottom: 12px; border: 1px solid #333;
+  }
+  .setup-file-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .setup-file-name { font-weight: 600; color: #e94560; }
+  .setup-play-btn {
+    background: #0f3460; border: none; color: #4cc9f0; padding: 6px 16px;
+    border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+  }
+  .setup-progress-wrap {
+    background: #1a1a2e; border-radius: 6px; height: 30px; position: relative;
+    overflow: hidden; margin-bottom: 10px; cursor: pointer;
+  }
+  .setup-progress-fill {
+    height: 100%; background: #0f3460; width: 0%; transition: width 0.15s;
+  }
+  .setup-progress-time {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 0.8rem; color: #aaa; pointer-events: none;
+  }
+  .marker-line {
+    position: absolute; top: 0; bottom: 0; width: 2px; background: #e94560;
+    pointer-events: none;
+  }
+  .marker-label {
+    position: absolute; top: 2px; font-size: 0.6rem; color: #e94560;
+    pointer-events: none; white-space: nowrap;
+  }
+  .setup-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .mark-btn {
+    background: #e94560; border: none; color: #fff; padding: 8px 14px;
+    border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;
+  }
+  .mark-btn:disabled { background: #555; cursor: default; }
+  .marker-info { font-size: 0.8rem; color: #888; margin-left: auto; }
+  .clear-btn {
+    background: none; border: 1px solid #555; color: #888; padding: 6px 12px;
+    border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+  }
+
+  .setup-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .setup-header h2 { color: #e94560; font-size: 1.1rem; }
+  .setup-hint { color: #666; font-size: 0.8rem; margin-bottom: 16px; line-height: 1.4; }
+
+  .hidden { display: none !important; }
+
+  .not-setup {
+    text-align: center; color: #888; padding: 20px;
+    background: #16213e; border-radius: 12px; margin-bottom: 16px;
+  }
+  .not-setup a { color: #e94560; cursor: pointer; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Bharatanatyam Practice</h1>
+  <button class="gear-btn" id="toggleMode" title="Setup Mode">&#9881;</button>
+</header>
+
+<main>
+  <!-- Practice Mode -->
+  <div id="practiceMode">
+    <p class="section-label">Adavu Type</p>
+    <div class="type-buttons">
+      <button class="type-btn selected" data-type="thatadavu">Thatadavu</button>
+      <button class="type-btn" data-type="naatadavu">Naatadavu</button>
+    </div>
+
+    <p class="section-label">Number</p>
+    <div class="number-grid" id="numberGrid"></div>
+
+    <p class="section-label">Speed</p>
+    <div class="speed-buttons">
+      <button class="speed-btn selected" data-speed="1">Speed 1</button>
+      <button class="speed-btn" data-speed="2">Speed 2</button>
+      <button class="speed-btn" data-speed="3">Speed 3</button>
+      <button class="speed-btn" data-speed="0">All</button>
+    </div>
+
+    <div style="margin-bottom: 24px;">
+      <button class="speed-btn loop-toggle" id="loopToggle">Loop: Off</button>
+    </div>
+
+    <div id="notSetup" class="not-setup hidden">
+      Speed markers not set for this file. <a id="goSetup">Set up in Settings</a>
+    </div>
+
+    <button class="play-btn" id="playBtn" disabled>Play</button>
+
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="time-display" id="timeDisplay"></div>
+  </div>
+
+  <!-- Setup Mode -->
+  <div id="setupMode" class="hidden">
+    <div class="setup-header">
+      <h2>Setup: Mark Speed Boundaries</h2>
+    </div>
+    <p class="setup-hint">
+      Play each file and click "Mark Speed 2" when speed 2 starts, then "Mark Speed 3" when speed 3 starts.
+      Markers are saved automatically.
+    </p>
+    <div id="setupList"></div>
+  </div>
+</main>
+
+<script>
+const FILES = {
+  thatadavu: [1, 2, 3, 5, 6, 7, 8],
+  naatadavu: [1, 2, 3, 4, 5, 6]
+};
+const OVERLAP = 1.5;
+
+// Markers loaded from markers.json
+let markersData = {};
+
+// State
+let selectedType = 'thatadavu';
+let selectedNumber = 1;
+let selectedSpeed = 1;
+let isPlaying = false;
+let loopEnabled = false;
+let practiceAudio = null;
+let setupAudios = {};
+let animFrame = null;
+
+function getMarkers(type, num) {
+  const key = `${type}_${num}`;
+  return markersData[key] ? { ...markersData[key] } : null;
+}
+function setMarkers(type, num, m2, m3) {
+  markersData[`${type}_${num}`] = { m2, m3 };
+}
+function clearMarkers(type, num) {
+  delete markersData[`${type}_${num}`];
+}
+
+function fileKey(type, num) { return `${type}-${num}`; }
+function filePath(type, num) { return `audio/${type}-${num}.mp3`; }
+
+// Format seconds as m:ss
+function fmt(s) {
+  if (s == null || isNaN(s)) return '-:--';
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+// --- Practice Mode ---
+const numberGrid = document.getElementById('numberGrid');
+const playBtn = document.getElementById('playBtn');
+const progressBar = document.getElementById('progressBar');
+const timeDisplay = document.getElementById('timeDisplay');
+const notSetup = document.getElementById('notSetup');
+
+function renderNumbers() {
+  numberGrid.innerHTML = '';
+  const nums = FILES[selectedType];
+  // All possible 1-8
+  for (let i = 1; i <= 8; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'num-btn';
+    btn.textContent = i;
+    btn.dataset.num = i;
+    if (!nums.includes(i)) {
+      btn.disabled = true;
+    } else {
+      if (i === selectedNumber) btn.classList.add('selected');
+      btn.addEventListener('click', () => {
+        selectedNumber = i;
+        renderNumbers();
+        updatePlayState();
+      });
+    }
+    numberGrid.appendChild(btn);
+  }
+}
+
+function updatePlayState() {
+  stopPractice();
+  if (selectedSpeed === 0) {
+    // "All" mode doesn't need markers
+    notSetup.classList.add('hidden');
+    playBtn.disabled = false;
+  } else {
+    const markers = getMarkers(selectedType, selectedNumber);
+    if (!markers) {
+      notSetup.classList.remove('hidden');
+      playBtn.disabled = true;
+    } else {
+      notSetup.classList.add('hidden');
+      playBtn.disabled = false;
+    }
+  }
+  progressBar.style.width = '0%';
+  timeDisplay.textContent = '';
+}
+
+function getSegment(markers, speed, duration) {
+  if (speed === 0) return [0, duration];
+  if (speed === 1) return [0, Math.min(markers.m2 + OVERLAP, duration)];
+  if (speed === 2) return [Math.max(markers.m2 - OVERLAP, 0), Math.min(markers.m3 + OVERLAP, duration)];
+  return [Math.max(markers.m3 - OVERLAP, 0), duration];
+}
+
+function stopPractice() {
+  isPlaying = false;
+  if (practiceAudio) {
+    practiceAudio.pause();
+    practiceAudio.removeAttribute('src');
+    practiceAudio.load();
+    practiceAudio = null;
+  }
+  if (animFrame) cancelAnimationFrame(animFrame);
+  playBtn.textContent = 'Play';
+  playBtn.classList.remove('playing');
+}
+
+function startPractice() {
+  const markers = getMarkers(selectedType, selectedNumber);
+  if (selectedSpeed !== 0 && !markers) return;
+
+  practiceAudio = new Audio(filePath(selectedType, selectedNumber));
+  practiceAudio.preload = 'auto';
+
+  practiceAudio.addEventListener('loadedmetadata', () => {
+    const [start, end] = getSegment(markers, selectedSpeed, practiceAudio.duration);
+    practiceAudio.currentTime = start;
+    practiceAudio.play();
+    isPlaying = true;
+    playBtn.textContent = 'Stop';
+    playBtn.classList.add('playing');
+
+    function tick() {
+      if (!isPlaying) return;
+      const cur = practiceAudio.currentTime;
+      if (cur >= end) {
+        if (loopEnabled) {
+          practiceAudio.currentTime = start;
+          practiceAudio.play();
+          animFrame = requestAnimationFrame(tick);
+          return;
+        }
+        stopPractice();
+        progressBar.style.width = '100%';
+        return;
+      }
+      const pct = ((cur - start) / (end - start)) * 100;
+      progressBar.style.width = pct + '%';
+      timeDisplay.textContent = `${fmt(cur - start)} / ${fmt(end - start)}`;
+      animFrame = requestAnimationFrame(tick);
+    }
+    tick();
+  });
+
+  practiceAudio.addEventListener('ended', () => {
+    if (loopEnabled) {
+      const [start] = getSegment(markers, selectedSpeed, practiceAudio.duration);
+      practiceAudio.currentTime = start;
+      practiceAudio.play();
+    } else {
+      stopPractice();
+    }
+  });
+  practiceAudio.addEventListener('error', () => {
+    stopPractice();
+    timeDisplay.textContent = 'Error loading audio';
+  });
+}
+
+playBtn.addEventListener('click', () => {
+  if (isPlaying) stopPractice();
+  else startPractice();
+});
+
+// Type buttons
+document.querySelectorAll('.type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedType = btn.dataset.type;
+    // Reset to first available number
+    selectedNumber = FILES[selectedType][0];
+    renderNumbers();
+    updatePlayState();
+  });
+});
+
+// Speed buttons
+document.querySelectorAll('.speed-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedSpeed = parseInt(btn.dataset.speed);
+    if (isPlaying) {
+      stopPractice();
+      startPractice();
+    }
+  });
+});
+
+// Loop toggle
+const loopToggle = document.getElementById('loopToggle');
+loopToggle.addEventListener('click', () => {
+  loopEnabled = !loopEnabled;
+  loopToggle.textContent = loopEnabled ? 'Loop: On' : 'Loop: Off';
+  loopToggle.classList.toggle('active', loopEnabled);
+});
+
+// --- Setup Mode ---
+const setupMode = document.getElementById('setupMode');
+const practiceMode = document.getElementById('practiceMode');
+const toggleMode = document.getElementById('toggleMode');
+const setupList = document.getElementById('setupList');
+
+document.getElementById('goSetup').addEventListener('click', () => {
+  toggleMode.click();
+});
+
+let inSetup = false;
+toggleMode.addEventListener('click', () => {
+  inSetup = !inSetup;
+  if (inSetup) {
+    stopPractice();
+    practiceMode.classList.add('hidden');
+    setupMode.classList.remove('hidden');
+    toggleMode.classList.add('active');
+    toggleMode.title = 'Practice Mode';
+    renderSetup();
+  } else {
+    stopAllSetupAudio();
+    setupMode.classList.add('hidden');
+    practiceMode.classList.remove('hidden');
+    toggleMode.classList.remove('active');
+    toggleMode.title = 'Setup Mode';
+    updatePlayState();
+  }
+});
+
+function stopAllSetupAudio() {
+  for (const k in setupAudios) {
+    if (setupAudios[k]) {
+      setupAudios[k].pause();
+      setupAudios[k].removeAttribute('src');
+      setupAudios[k].load();
+    }
+  }
+  setupAudios = {};
+}
+
+function renderSetup() {
+  setupList.innerHTML = '';
+  for (const type of ['thatadavu', 'naatadavu']) {
+    for (const num of FILES[type]) {
+      const key = fileKey(type, num);
+      const markers = getMarkers(type, num);
+      const displayName = type.charAt(0).toUpperCase() + type.slice(1) + ' ' + num;
+
+      const div = document.createElement('div');
+      div.className = 'setup-file';
+      div.id = `setup-${key}`;
+      div.innerHTML = `
+        <div class="setup-file-header">
+          <span class="setup-file-name">${displayName}</span>
+          <button class="setup-play-btn" data-key="${key}" data-type="${type}" data-num="${num}">&#9654; Play</button>
+        </div>
+        <div class="setup-progress-wrap" data-key="${key}">
+          <div class="setup-progress-fill" id="prog-${key}"></div>
+          <span class="setup-progress-time" id="time-${key}">0:00</span>
+          ${markers ? `
+            <div class="marker-line" style="left:0%;" id="ml2-${key}"></div>
+            <span class="marker-label" style="left:0%;" id="mlbl2-${key}">S2</span>
+            <div class="marker-line" style="left:0%;" id="ml3-${key}"></div>
+            <span class="marker-label" style="left:0%;" id="mlbl3-${key}">S3</span>
+          ` : ''}
+        </div>
+        <div class="setup-actions">
+          <button class="mark-btn" data-action="m2" data-key="${key}" data-type="${type}" data-num="${num}" disabled>Mark Speed 2</button>
+          <button class="mark-btn" data-action="m3" data-key="${key}" data-type="${type}" data-num="${num}" disabled>Mark Speed 3</button>
+          <button class="clear-btn" data-key="${key}" data-type="${type}" data-num="${num}" ${!markers ? 'style="display:none"' : ''}>Clear</button>
+          <span class="marker-info" id="info-${key}">
+            ${markers ? `S2: ${fmt(markers.m2)} | S3: ${fmt(markers.m3)}` : 'No markers set'}
+          </span>
+        </div>
+      `;
+      setupList.appendChild(div);
+    }
+  }
+
+  // Wire up play buttons
+  setupList.querySelectorAll('.setup-play-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      const type = btn.dataset.type;
+      const num = parseInt(btn.dataset.num);
+      toggleSetupPlay(key, type, num, btn);
+    });
+  });
+
+  // Wire up mark buttons
+  setupList.querySelectorAll('.mark-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      const type = btn.dataset.type;
+      const num = parseInt(btn.dataset.num);
+      const action = btn.dataset.action;
+      markTime(key, type, num, action);
+    });
+  });
+
+  // Wire up clear buttons
+  setupList.querySelectorAll('.clear-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.type;
+      const num = parseInt(btn.dataset.num);
+      clearMarkers(type, num);
+      renderSetup();
+    });
+  });
+
+  // Wire up progress bar seeking
+  setupList.querySelectorAll('.setup-progress-wrap').forEach(wrap => {
+    wrap.addEventListener('click', (e) => {
+      const key = wrap.dataset.key;
+      const audio = setupAudios[key];
+      if (!audio || !audio.duration) return;
+      const rect = wrap.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      audio.currentTime = pct * audio.duration;
+    });
+  });
+}
+
+function toggleSetupPlay(key, type, num, btn) {
+  const existing = setupAudios[key];
+  if (existing && !existing.paused) {
+    existing.pause();
+    btn.innerHTML = '&#9654; Play';
+    return;
+  }
+
+  // Stop others
+  for (const k in setupAudios) {
+    if (setupAudios[k] && !setupAudios[k].paused) {
+      setupAudios[k].pause();
+      const otherBtn = setupList.querySelector(`.setup-play-btn[data-key="${k}"]`);
+      if (otherBtn) otherBtn.innerHTML = '&#9654; Play';
+      // Disable mark buttons for other files
+      setupList.querySelectorAll(`.mark-btn[data-key="${k}"]`).forEach(mb => mb.disabled = true);
+    }
+  }
+
+  if (!setupAudios[key]) {
+    setupAudios[key] = new Audio(filePath(type, num));
+  }
+  const audio = setupAudios[key];
+  audio.play();
+  btn.innerHTML = '&#9646;&#9646; Pause';
+
+  // Enable mark buttons
+  setupList.querySelectorAll(`.mark-btn[data-key="${key}"]`).forEach(mb => mb.disabled = false);
+
+  function updateProgress() {
+    if (audio.paused) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    const fill = document.getElementById(`prog-${key}`);
+    const time = document.getElementById(`time-${key}`);
+    if (fill) fill.style.width = pct + '%';
+    if (time) time.textContent = fmt(audio.currentTime) + ' / ' + fmt(audio.duration);
+
+    // Update marker positions if they exist
+    const markers = getMarkers(type, num);
+    if (markers && audio.duration) {
+      const ml2 = document.getElementById(`ml2-${key}`);
+      const ml3 = document.getElementById(`ml3-${key}`);
+      const mlbl2 = document.getElementById(`mlbl2-${key}`);
+      const mlbl3 = document.getElementById(`mlbl3-${key}`);
+      if (ml2) ml2.style.left = (markers.m2 / audio.duration * 100) + '%';
+      if (ml3) ml3.style.left = (markers.m3 / audio.duration * 100) + '%';
+      if (mlbl2) mlbl2.style.left = (markers.m2 / audio.duration * 100) + '%';
+      if (mlbl3) mlbl3.style.left = (markers.m3 / audio.duration * 100) + '%';
+    }
+    requestAnimationFrame(updateProgress);
+  }
+  requestAnimationFrame(updateProgress);
+
+  audio.addEventListener('ended', () => {
+    btn.innerHTML = '&#9654; Play';
+    setupList.querySelectorAll(`.mark-btn[data-key="${key}"]`).forEach(mb => mb.disabled = true);
+  });
+}
+
+function markTime(key, type, num, action) {
+  const audio = setupAudios[key];
+  if (!audio) return;
+  const t = audio.currentTime;
+  let markers = getMarkers(type, num) || {};
+
+  if (action === 'm2') markers.m2 = Math.round(t * 100) / 100;
+  else markers.m3 = Math.round(t * 100) / 100;
+
+  if (markers.m2 != null || markers.m3 != null) {
+    markersData[`${type}_${num}`] = markers;
+  }
+  if (markers.m2 != null && markers.m3 != null) {
+    setMarkers(type, num, markers.m2, markers.m3);
+  }
+
+  // Update info display
+  const info = document.getElementById(`info-${key}`);
+  if (info) {
+    const parts = [];
+    if (markers.m2 != null) parts.push('S2: ' + fmt(markers.m2));
+    if (markers.m3 != null) parts.push('S3: ' + fmt(markers.m3));
+    info.textContent = parts.join(' | ') || 'No markers set';
+  }
+
+  // Re-render to show marker lines
+  if (markers.m2 != null && markers.m3 != null) {
+    // Add marker lines if not present
+    const wrap = setupList.querySelector(`.setup-progress-wrap[data-key="${key}"]`);
+    if (wrap && !document.getElementById(`ml2-${key}`)) {
+      wrap.insertAdjacentHTML('beforeend', `
+        <div class="marker-line" style="left:0%;" id="ml2-${key}"></div>
+        <span class="marker-label" style="left:0%;" id="mlbl2-${key}">S2</span>
+        <div class="marker-line" style="left:0%;" id="ml3-${key}"></div>
+        <span class="marker-label" style="left:0%;" id="mlbl3-${key}">S3</span>
+      `);
+    }
+    // Show clear button
+    const clearBtn = setupList.querySelector(`.clear-btn[data-key="${key}"]`);
+    if (clearBtn) clearBtn.style.display = '';
+  }
+}
+
+// Init: load markers from JSON file, then render
+fetch('markers.json')
+  .then(r => r.json())
+  .then(data => { markersData = data; })
+  .catch(() => { console.warn('Could not load markers.json'); })
+  .finally(() => {
+    renderNumbers();
+    updatePlayState();
+  });
+</script>
+</body>
+</html>
